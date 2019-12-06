@@ -1,0 +1,27 @@
+{
+  "name": "transcriber-statusdigest",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "npm run build && sls deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/aws-lambda": "^8.10.36",
+    "@types/jquery": "^3.3.31",
+    "@types/moment-timezone": "^0.5.12",
+    "@types/node": "^12.12.11",
+    "@types/xml2js": "^0.4.5",
+    "aws-sdk": "^2.493.0",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.27",
+    "node-html-emails": "^1.0.2",
+    "save": "^2.4.0",
+    "typescript": "^3.7.2",
+    "xml2js": "^0.4.22"
+  }
+}

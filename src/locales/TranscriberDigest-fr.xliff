@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file id="1" original="TranscriberDigest-en.xliff" source-language="en" target-language="fr" datatype="plaintext">
+    <body>
+      <trans-unit id="App">
+        <source>SIL Transcriber</source>
+        <target></target>
+        <note>Context: Application Name</note><devid>
+        <fr>SIL Transcriber</fr>
+        <id>SIL Transcriber</id>
+       </trans-unit>
+      <trans-unit id="Project">
+        <source>Project</source>
+        <target></target>
+        <note>Context: Invitation Email</note>
+        <fr>Projet</fr>
+        <id>Proyek</id>
+      </trans-unit>
+      <trans-unit id="Plan">
+        <source>Plan</source>
+        <target></target>
+        <note>Context: Invitation Email</note>
+        <fr>Plan</fr>
+        <id>Rencana</id>
+      </trans-unit>
+      <trans-unit id="Passage">
+        <source>Passage</source>
+        <target></target>
+        <note>Context: Invitation Email</note>
+        <fr>Passage</fr>
+        <id>bagian</id>
+      </trans-unit>
+      <trans-unit id="State">
+       <source>State</source>
+         <target></target>
+        <note>Context: Invitation Email</note>
+       <fr>Etat</fr>
+       <id>negara</id>
+      </trans-unit>
+      <trans-unit id="User">
+        <source>User</source>
+        <target></target>
+        <note>Context: Invitation Email</note>
+        <fr>Utilisateur</fr>
+        <id>Pengguna</id>
+     </trans-unit>
+    </body>
+  </file>
+</xliff>
