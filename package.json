@@ -4,7 +4,9 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "deploy": "npm run build && sls deploy",
+    "deploy": "npm run build && sls deploy ",
+    "deployqa": "npm run build && sls deploy -s qa",
+    "deployprod": "npm run build && sls deploy -s prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

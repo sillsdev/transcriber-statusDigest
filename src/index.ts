@@ -21,6 +21,7 @@ interface EmailStrings {
 interface IDataAttributes {
   projectid: number,
   project: string,
+  organizationid: number
   organization: string,
   planid: number,
   plan: string,
@@ -211,7 +212,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     let reqPath = path.join(__dirname, name);
     return fs.readFileSync(reqPath, 'utf8');
   }
-  function buildRow(row: any): string {
+  function buildRow(row: IDataRow): string {
     return row_html
       .replace("{Passage}", row.attributes.passage)
       .replace("{State}", row.attributes.state)
@@ -232,8 +233,13 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
       contents += buildRow(row);
     }
 
-    var template = "http://admin{0}.siltranscriber.org/main/{1}/{2}-plan/1/{3}/0";
-    var link = _format(template, [stageToProgram(), data[0].attributes.projectid.toString(), data[0].attributes.plantype.toLowerCase(), data[0].attributes.planid.toString()]);
+    var template = "http://admin{0}.siltranscriber.org/main/{1}/{2}-plan/{3}/{4}/3";
+
+    var link = _format(template, [stageToProgram(),
+    data[0].attributes.organizationid.toString(),
+    data[0].attributes.plantype.toLowerCase(),
+    data[0].attributes.projectid.toString(),
+    data[0].attributes.planid.toString()]);
     return projplan_html
       .replace("{projplanlink}", link)
       .replace("{ProjPlan}", data[0].attributes.project + ' - ' + data[0].attributes.plan)

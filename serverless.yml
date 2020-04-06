@@ -30,21 +30,41 @@ custom:
 plugins:
   -serverless-plugin-typescript
   -serverless-offline
-#package:
-#  exclude:
-#    - node_modules/**/*
-#  include:
-#    - node_modules/moment-timezone/**
-#    - node_modules/moment/**
-#    - node_modules/xml2js/**
-#    - node_modules/sax/**
-#    - node_modules/xmlbuilder/**
-#    - node_modules/util.promisify/**
-#    - node_modules/define-properties/**
-#    - node_modules/object-keys/**
-#    - node_modules/object.getownpropertydescriptors/**
-#    - node_modules/es-abstract/**
-#    - node_modules/has/**
+package:
+  exclude:
+    - node_modules/**/*
+  include:
+    - node_modules/es-abstract/**
+    - node_modules/xml2js/**
+    - node_modules/moment-timezone/**
+    - node_modules/moment/**
+    - node_modules/save/**
+    - node_modules/duplexer/**
+    - node_modules/event-stream/**
+    - node_modules/from/**
+    - node_modules/lodash/**
+    - node_modules/lodash.assign/**
+    - node_modules/map-stream/**
+    - node_modules/mingo/**
+    - node_modules/pause-stream/**
+    - node_modules/split/**
+    - node_modules/stream-combiner/**
+    - node_modules/through/**
+    - node_modules/sax/**
+    - node_modules/xmlbuilder/**
+    - node_modules/util.promisify/**
+    - node_modules/define-properties/**
+    - node_modules/object-keys/**
+    - node_modules/object.getownpropertydescriptors/**
+    - node_modules/has/**
+    - node_modules/function-bind/**
+    - node_modules/es-to-primitive/**
+    - node_modules/is-callable/**
+    - node_modules/is-date-object/**
+    - node_modules/is-symbol/**
+    - node_modules/has-symbols/**
+    - node_modules/object-inspect/**
+    - node_modules/is-regex/**
 functions:
   transcriber-statusDigest:
     handler: src/index.handler
