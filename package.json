@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "deploy": "npm run build && sls deploy ",
+    "deploy": "npm run build && sls deploy -v -s dev",
     "deployqa": "npm run build && sls deploy -s qa",
     "deployprod": "npm run build && sls deploy -s prod",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -12,13 +12,15 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "@types/aws-lambda": "^8.10.36",
     "@types/jquery": "^3.3.31",
     "@types/moment-timezone": "^0.5.12",
     "@types/node": "^12.12.11",
     "@types/xml2js": "^0.4.5",
-    "aws-sdk": "^2.493.0",
+    "aws-sdk": "^2.493.0"
+  },
+  "dependencies": {
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.27",
     "node-html-emails": "^1.0.2",
