@@ -1,21 +1,42 @@
+//npm run build
+//serverless deploy -v -s dev 
 import { Handler, Context, Callback } from 'aws-lambda';
-import { Lambda, config } from 'aws-sdk';
+import AWS, { Lambda, config } from 'aws-sdk';
 import { RequestOptions, request } from 'https';
 import path from 'path';
 import moment from 'moment-timezone';
 import { Parser } from 'xml2js';
 
+interface DigestStrings {
+  app: string,
+  project: string,
+  plan: string,
+  passage: string,
+  state: string,
+  user: string,
+  comments: string,
+  preferences: string,
+  sil: string,
+  subject: string,
+}
+interface ActivityStateStrings {
+  approved: string,
+  done:string,
+  incomplete: string,
+  needsNewRecording: string,
+  needsNewTranscription: string,
+  noMedia: string,
+  review: string,
+  reviewing: string,
+  synced: string,
+  transcribe: string,
+  transcribed: string,
+  transcribeReady: string,
+  transcribing: string
+}
 interface EmailStrings {
-  App: string,
-  Project: string,
-  Plan: string,
-  Passage: string,
-  State: string,
-  Change: string,
-  Comments: string,
-  Preferences: string,
-  SIL: string,
-  Subject: string,
+  digest: DigestStrings,
+  activityState: ActivityStateStrings
 }
 
 interface IDataAttributes {
@@ -46,6 +67,36 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
 
   const host: string = getEnvVarOrThrow(process.env.SIL_TR_HOST);
   const stagepath: string = getEnvVarOrThrow(process.env.SIL_TR_URLPATH);
+  const EnglishStrings : EmailStrings = 
+  {
+    digest: {
+      app: "SIL Transcriber",
+      project: "Project",
+      plan: "Plan",
+      passage: "Passage",
+      state: "Change",
+      user: "User",
+      comments: "Comments",
+      preferences: "Change communication preferences",
+      sil: "SIL International",
+      subject: "Daily Digest of SIL Transcriber Activity",
+    },
+    activityState: {
+      approved: "Approved",
+      done:"Done",
+      incomplete: "Incomplete",
+      needsNewRecording: "Needs New Recording",
+      needsNewTranscription:  "Needs New Transcription",
+      noMedia: "No Media",
+      review: "Ready to Review",
+      reviewing: "Reviewing",
+      synced: "Synced",
+      transcribe: "Transcribe",
+      transcribed: "Transcribed",
+      transcribeReady: "Ready to Transcribe",
+      transcribing: "Transcribing"
+    }
+  }
 
   function getEnvVarOrDefault(value: string | undefined, def: string): string {
     return value === undefined ? def : value;
@@ -61,115 +112,91 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     });
   };
   function stageToProgram(): string {
-    if (stagepath === '/prod')
-      return '';
-    return stagepath.replace("/", "-");
+    switch (stagepath)
+    {
+      case '/prod':
+        return ''; 
+      default:
+        return stagepath.replace("/", "-").substring(0,4);
+    }
   }
-  function getLocalizedString(id: string, xmlDoc: any): string {
-    return "This is it";
-  }
-  /*
-  function getLocalizedFile(name: string, callback: any): void {
-    var xhr = new XMLHttpRequest();
-    xhr.onload = () => {
-      let status = xhr.status;
 
-      if (status == 200) {
-        callback(null, xhr.responseXML);
-      } else {
-        callback(status, null);
-      }
-    };
-    xhr.open("GET", name, true);
-    xhr.send();
-
-  } */
-  function XMLtoJS(filename: string): Promise<any> {
-    console.log("XMLtoJS");
+  function XMLtoJS(xmlStr: string): Promise<any> 
+  {
     return new Promise((resolve, reject) => {
       var parser = new Parser();
-      var xmlStr = readFile(filename);
-      console.log(xmlStr);
-      parser.parseString(xmlStr, function (err: any, result: any) {
+       parser.parseString(xmlStr, function (err: any, result: any) {
         if (err !== null) {
           console.log("XMLtoJS error", err);
           reject(err);
         }
         else {
-          console.dir(result);
-          console.log('XMLtoJS Done');
+          //console.dir(result);
+          //console.log('XMLtoJS Done');
           resolve(result);
         }
       });
     });
   }
+
+/*
   function displayObj(obj: any, level: number) {
+    console.log(level, Object.keys(obj))
+    /*
     Object.keys(obj).forEach(e => {
       console.log(level, `key=${e}  value=${obj[e]}`);
       if (typeof (obj[e]) === 'object')
         displayObj(obj[e], level + 1);
     });
-  }
-  function UserStrings(locale: string): Promise<any> {
-    return XMLtoJS('locales/TranscriberDigest-en.xliff').then(function (data: any) {
-      var js = data;
-      displayObj(js.xliff.file, 1);
-      return {
-        App: getLocalizedString("App", js),
-        Project: getLocalizedString("Project", js),
-        Plan: getLocalizedString("Plan", js),
-        Passage: getLocalizedString("Passage", js),
-        State: getLocalizedString("State", js),
-        Change: getLocalizedString("User", js),
-        Comments: getLocalizedString("Comments", js),
-        Preferences: getLocalizedString("preferences", js),
-        SIL: getLocalizedString("SIL", js),
-        Subject: getLocalizedString("Subject", js),
-      }
-
-    });
-  }
-
-  /*
-    getLocalizedFile('locales/TranscriberDigest-' + locale + '.xliff', (err: number | null, xmlDoc: XMLDocument | null) => {
-      if (err != null || xmlDoc == null) {
-        console.error("NO Document", err);
-        reject(err);
-      }
-      else {
-        console.log(xmlDoc.getElementById("App"));
-        resolve({
-          App: "SIL Transcriber",
-          Project: "Project",
-          Plan: "Plan",
-          Passage: "Passage",
-          State: "New State",
-          Change: "User",
-          Comments: "Comments",
-          Preferences: "Change notification preferences",
-          SIL: "SIL International",
-          Subject: "My Digest of SIL Transcriber Activity",
-        });
-      }
-    });
-  }
-  */
-
-
-
-  function getUserStrings(locale: string): EmailStrings {
-    return {
-      App: "SIL Transcriber",
-      Project: "Project",
-      Plan: "Plan",
-      Passage: "Passage",
-      State: "Change",
-      Change: "User",
-      Comments: "Comments",
-      Preferences: "Change communication preferences",
-      SIL: "SIL International",
-      Subject: "Daily Digest of SIL Transcriber Activity",
+    */
+  //} 
+  
+  
+  async function ReadStrings(locale: string)
+  {
+    const BUCKET = 'sil-transcriber-localization'
+    const DIGEST = '/TranscriberDigest-en.xliff'
+    var params = {Bucket: BUCKET, Key: locale + DIGEST};
+    //console.log('ReadStrings', params.Key);
+    try {
+      var s3 = new AWS.S3();
+      const xml_data = await s3.getObject(params).promise();
+      return xml_data?.Body?.toString() ;
+    } catch (err) {
+        console.log('ReadStrings error:', params.Key);
+        if (err.code !== 'NoSuchKey')
+          console.log('ReadStrings', err);
+        //use default english
+        return undefined;
     }
+}
+function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, function(i) {
+  return '&#'+i.charCodeAt(0)+';';
+})};
+
+  async function UserStrings(locale: string): Promise<any> {
+    console.log('locale:', locale);
+    var localStrs = {digest: {...EnglishStrings.digest}, activityState: {...EnglishStrings.activityState}}
+    var strings = (locale !== 'en') ? await ReadStrings(locale) : undefined;
+    if (strings)
+    { 
+      const data = await XMLtoJS(strings);
+      var js = data;
+      for (var ix = 0; ix < js.xliff.file[0].body[0]['trans-unit'].length; ix++) {
+        //console.log(ix, 
+        //js.xliff.file[0].body[0]['trans-unit'][ix]['$'].id, 
+        //js.xliff.file[0].body[0]['trans-unit'][ix].target[0]['_']);
+        var ids = js.xliff.file[0].body[0]['trans-unit'][ix]['$'].id.split('.');
+        if (ids[0] === 'digest') {
+          //encode all but subject
+          localStrs.digest[ids[1] as keyof DigestStrings] = js.xliff.file[0].body[0]['trans-unit'][ix].target[0]['_'];
+          if (ids[1] !== 'subject') localStrs.digest[ids[1] as keyof DigestStrings] = encodeStr(localStrs.digest[ids[1] as keyof DigestStrings]);
+        }
+        else
+          localStrs.activityState[ids[1] as keyof ActivityStateStrings] = encodeStr(js.xliff.file[0].body[0]['trans-unit'][ix].target[0]['_']);
+      }
+    }
+    return localStrs;
   }
 
   function getChanges(since: string): Promise<any> {
@@ -182,6 +209,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
       };
       console.log(host + options.path);
       const req = request(options, res => {
+        console.log(res.statusCode);
         if (res.statusCode != 200) {
           //not found
           reject(res.statusCode);
@@ -212,37 +240,37 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     let reqPath = path.join(__dirname, name);
     return fs.readFileSync(reqPath, 'utf8');
   }
-  function buildRow(row: IDataRow): string {
+  function buildRow(row: IDataRow, strings:EmailStrings): string {
     return row_html
       .replace("{Passage}", row.attributes.passage)
-      .replace("{State}", row.attributes.state)
+      .replace("{State}", strings.activityState[row.attributes.state as keyof ActivityStateStrings]  || row.attributes.state)
       .replace("{Change}", row.attributes.modifiedby)
-      .replace("{Comment}", row.attributes.comments ? row.attributes.comments : '')
+      .replace("{Comment}", row.attributes.comments || '')
   }
 
   function localizeColumnHeaders(strings: EmailStrings): string {
-    return headers_html.replace("{{Passage}}", strings.Passage)
-      .replace("{{State}}", strings.State)
-      .replace("{{Change}}", strings.Change)
-      .replace("{{Comments}}", strings.Comments);
+    return headers_html.replace("{{Passage}}", strings.digest.passage)
+      .replace("{{State}}",strings.digest.state)
+      .replace("{{Change}}", strings.digest.user)
+      .replace("{{Comments}}", strings.digest.comments);
   }
   function buildProjPlan(data: IDataRow[], strings: EmailStrings): string {
     var contents: string = "";
     var row;
     for (row of data) {
-      contents += buildRow(row);
+      contents += buildRow(row, strings);
     }
 
-    var template = "http://admin{0}.siltranscriber.org/main/{1}/{2}-plan/{3}/{4}/3";
+    var template = "http://app{0}.siltranscriber.org/plan/{1}/3";
 
     var link = _format(template, [stageToProgram(),
-    data[0].attributes.organizationid.toString(),
-    data[0].attributes.plantype.toLowerCase(),
-    data[0].attributes.projectid.toString(),
+    //data[0].attributes.organizationid.toString(),
+    //data[0].attributes.plantype.toLowerCase(),
+    //data[0].attributes.projectid.toString(),
     data[0].attributes.planid.toString()]);
     return projplan_html
       .replace("{projplanlink}", link)
-      .replace("{ProjPlan}", data[0].attributes.project + ' - ' + data[0].attributes.plan)
+      .replace("{ProjPlan}", data[0].attributes.plan)
       .replace("{{headers}}", localizeColumnHeaders(strings))
       .replace("{datarows}", contents);
   }
@@ -289,7 +317,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
       end = end + 1;
     }
     contents += buildHour(data.slice(start, end), strings);
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as Intl.DateTimeFormatOptions;
 
     return date_html
       .replace("{Date}", curDate.toLocaleDateString(data[0].attributes.locale ? data[0].attributes.locale : 'en-US', options))
@@ -313,27 +341,27 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     }
     contents += buildDay(data.slice(start, end), strings);
     return main_html
-      .replace("{{App}}", strings.App)
-      .replace("{{Subject}}", strings.Subject)
+      .replace("{{App}}", strings.digest.app)
+      .replace("{{Subject}}", encodeStr(strings.digest.subject))
       .replace("{daterows}", contents)
-      .replace("{{Preferences}}", strings.Preferences)
-      .replace("{ProfileLink}", _format("https://admin{0}.siltranscriber.org/profile", [stageToProgram()]))
+      .replace("{{Preferences}}", strings.digest.preferences)
+      .replace("{ProfileLink}", _format("https://app{0}.siltranscriber.org/profile", [stageToProgram()]))
       .replace("{Year}", (new Date()).getFullYear().toString())
-      .replace("{{SIL}}", strings.SIL);
+      .replace("{{SIL}}",strings.digest.sil);
   }
-  function sendEmail(to: string, body: string, subject: string) {
+  async function sendEmail(to: string, body: string, subject: string) {
     const from: string = getEnvVarOrThrow(process.env.SIL_TR_FROM_EMAIL);
-    const captureTo: string = getEnvVarOrDefault(process.env.SIL_TR_URLPATH, "/dev") == "/dev" ? "sara_hentzel@wycliffe.org" : to;
-    console.table(to);
+    const captureTo: string = stagepath.substring(0, 4) == "/dev" ? "sara_hentzel@wycliffe.org" : to;
+    //console.log(to, captureTo !== to ? captureTo : '');
     var payload = {
       ToAddresses: [captureTo],
       BodyHtml: body,
-      Subject: captureTo === to ? subject : "daily digest for " + to,
+      Subject: subject + (captureTo === to ? '' : ":: " + to),
       FromEmail: from
     }
     var params = {
       FunctionName: 'SendSESEmail', // the lambda function we are going to invoke
-      InvocationType: 'RequestResponse',
+      InvocationType: 'Event', // 'RequestResponse', //'Event', // 
       LogType: 'Tail',
       Payload: JSON.stringify(payload)
     };
@@ -342,14 +370,15 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
 
     lambda.invoke(params, function (err, data) {
       if (err) {
-        console.log(err);
+        console.log('SendSESEmail', to, err);
         context.fail(err);
       } else {
-        console.log("Success");
-        context.succeed('SendSES said ' + data.Payload);
+        console.log('SendSESEmail',to, "Success");
+        //context.succeed('SendSES said ' + data.Payload);
       }
     })
   }
+
   try {
     const minutes: number = parseInt(getEnvVarOrDefault(process.env.SIL_TR_NOTIFYTIMEMINUTES, "1440"));
     const now: number = Date.now();
@@ -361,34 +390,38 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     var headers_html = readFile('templates/headers.partial.hbs');
     var row_html = readFile('templates/row.partial.hbs');
 
-
-    getChanges(since.toISOString()).then(function (data: IDataRow[]) {
-      console.log("returned data", data.length);
+    getChanges(since.toISOString()).then(async function (data: IDataRow[]) {
+      console.log("getChanges", data.length);
       if (data.length > 0) {
         var email: string = data[0].attributes.email;
+        var locale: string = data[0].attributes.locale;
         var start: number = 0;
         var end: number = 0;
-        var strings: EmailStrings = getUserStrings(data[0].attributes.locale)
+        var strings: EmailStrings = await UserStrings(locale); 
         var row: any;
-        console.log("call Userstrings");
-        UserStrings('fr').then(function (newstrings: EmailStrings) {
-          console.log(newstrings);
-          for (row of data) {
-            if (row.attributes.email != email) {
-              console.log("send to ", email, start, end - 1);
+        for (var ix = 0; ix < data.length; ix++) {
+          row = data[ix];
+          if (row.attributes.email != email) {
+              console.log("send to ", email, strings.digest.subject, start, end - 1);
               sendEmail(email,
-                buildEmailNHE(data.slice(start, end), strings), strings.Subject);
-              start = end;
-              email = row.attributes.email
+                  buildEmailNHE(data.slice(start, end), strings), strings.digest.subject);
+            
+            start = end;
+            email = row.attributes.email
+            if (locale != row.attributes.locale)
+            {
+              locale = row.attributes.locale;
+              strings = await UserStrings(locale); 
             }
-            end = end + 1;
           }
-          console.log("send to ", email, start, end - 1);
+          end = end + 1;
+        } 
+          console.log("send to ", email, strings.digest.subject, start, end - 1);
           sendEmail(email,
-            buildEmailNHE(data.slice(start, end), strings), strings.Subject);
-        }, function (serr: any) { console.log("user strings error", serr) });
+            buildEmailNHE(data.slice(start, end), strings), strings.digest.subject);
+          
       }
-    }, function (err) { console.log(err) });
+    }, function (err) { console.log('getChanges', err) });
 
   } catch (e) {
     console.log("catch");
