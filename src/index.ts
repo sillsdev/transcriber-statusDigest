@@ -70,7 +70,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
   const EnglishStrings : EmailStrings = 
   {
     digest: {
-      app: "SIL Transcriber",
+      app: "Audio Project Manager",
       project: "Project",
       plan: "Plan",
       passage: "Passage",
@@ -79,7 +79,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
       comments: "Comments",
       preferences: "Change communication preferences",
       sil: "SIL International",
-      subject: "Daily Digest of SIL Transcriber Activity",
+      subject: "Daily Digest of Audio Project Manager Activity",
     },
     activityState: {
       approved: "Approved",
@@ -164,7 +164,7 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
       return xml_data?.Body?.toString() ;
     } catch (err) {
         console.log('ReadStrings error:', params.Key);
-        if (err.code !== 'NoSuchKey')
+        if ((err as any).code !== 'NoSuchKey')
           console.log('ReadStrings', err);
         //use default english
         return undefined;
@@ -204,7 +204,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       // options for API request
       const options: RequestOptions = {
         host: host,
-        path: stagepath + "/api/statehistory/since/" + since,
+        path: stagepath + "/api/statehistories/since/" + since,
         method: "GET"
       };
       console.log(host + options.path);
@@ -261,7 +261,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       contents += buildRow(row, strings);
     }
 
-    var template = "http://app{0}.siltranscriber.org/plan/{1}/3";
+    var template = "http://app{0}.audioprojectmanager.org/plan/{1}/3";
 
     var link = _format(template, [stageToProgram(),
     //data[0].attributes.organizationid.toString(),
@@ -345,7 +345,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       .replace("{{Subject}}", encodeStr(strings.digest.subject))
       .replace("{daterows}", contents)
       .replace("{{Preferences}}", strings.digest.preferences)
-      .replace("{ProfileLink}", _format("https://app{0}.siltranscriber.org/profile", [stageToProgram()]))
+      .replace("{ProfileLink}", _format("https://app{0}.audioprojectmanager.org/profile", [stageToProgram()]))
       .replace("{Year}", (new Date()).getFullYear().toString())
       .replace("{{SIL}}",strings.digest.sil);
   }
@@ -394,7 +394,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       console.log("getChanges", data.length);
       if (data.length > 0) {
         var email: string = data[0].attributes.email;
-        var locale: string = data[0].attributes.locale;
+        var locale: string = data[0].attributes.locale ?? "en";
         var start: number = 0;
         var end: number = 0;
         var strings: EmailStrings = await UserStrings(locale); 
@@ -410,7 +410,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
             email = row.attributes.email
             if (locale != row.attributes.locale)
             {
-              locale = row.attributes.locale;
+              locale = row.attributes.locale ?? "en";
               strings = await UserStrings(locale); 
             }
           }
@@ -426,7 +426,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
   } catch (e) {
     console.log("catch");
     console.log(e);
-    callback(e, undefined);
+    callback(e as Error, undefined);
   }
 };
 

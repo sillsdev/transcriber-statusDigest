@@ -3,11 +3,11 @@
   <file id="1" original="TranscriberDigest-en.xliff" source-language="en" target-language="fr" datatype="plaintext">
     <body>
       <trans-unit id="App">
-        <source>SIL Transcriber</source>
+        <source>Audio Project Manager</source>
         <target></target>
         <note>Context: Application Name</note><devid>
-        <fr>SIL Transcriber</fr>
-        <id>SIL Transcriber</id>
+        <fr>Audio Project Manager</fr>
+        <id>Audio Project Manager</id>
        </trans-unit>
       <trans-unit id="Project">
         <source>Project</source>

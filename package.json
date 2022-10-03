@@ -4,28 +4,27 @@
   "description": "",
   "scripts": {
     "build": "tsc",
-    "deploy": "npm run build && sls deploy -v -s dev",
-    "deployqa": "npm run build && sls deploy -s qa",
-    "deployprod": "npm run build && sls deploy -s prod",
+    "deploy": "npm run build && serverless deploy --verbose -s dev",
+    "deployqa": "npm run build && serverless deploy --verbose -s qa",
+    "deployprod": "npm run build && serverless deploy --verbose -s prod",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.36",
-    "@types/jquery": "^3.3.31",
-    "@types/moment-timezone": "^0.5.12",
-    "@types/node": "^12.12.11",
-    "@types/xml2js": "^0.4.5",
-    "aws-sdk": "^2.493.0"
+    "@types/aws-lambda": "^8.10.106",
+    "@types/jquery": "^3.5.14",
+    "@types/node": "^18.8.0",
+    "@types/xml2js": "^0.4.11",
+    "aws-sdk": "^2.1227.0",
+    "typescript": "^4.8.4"
   },
   "dependencies": {
-    "moment": "^2.24.0",
-    "moment-timezone": "^0.5.27",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.37",
     "node-html-emails": "^1.0.2",
-    "save": "^2.4.0",
-    "typescript": "^3.7.2",
+    "save": "^2.9.0",
     "xml2js": "^0.4.22"
   }
 }
