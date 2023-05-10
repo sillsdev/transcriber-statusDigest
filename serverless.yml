@@ -37,7 +37,6 @@ package:
     - node_modules/xml2js/**
     - node_modules/moment-timezone/**
     - node_modules/moment/**
-    - node_modules/save/**
     - node_modules/duplexer/**
     - node_modules/event-stream/**
     - node_modules/from/**
