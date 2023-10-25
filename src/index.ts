@@ -261,7 +261,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       contents += buildRow(row, strings);
     }
 
-    var template = "https://app{0}.audioprojectmanager.org/detail/{1}/3";
+    var template = "https://app{0}.audioprojectmanager.org/plan/{1}/0";
 
     var link = _format(template, [stageToProgram(),
     //data[0].attributes.organizationid.toString(),
