@@ -1,10 +1,11 @@
 //npm run build
 //serverless deploy -v -s dev 
-import { Handler, Context, Callback } from 'aws-lambda';
-import AWS, { Lambda, config } from 'aws-sdk';
+import { LambdaClient, InvokeCommand, InvocationType, LogType } from "@aws-sdk/client-lambda";
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Context, Callback } from 'aws-lambda';
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { Readable } from "stream";
 import { RequestOptions, request } from 'https';
 import path from 'path';
-import moment from 'moment-timezone';
 import { Parser } from 'xml2js';
 
 interface DigestStrings {
@@ -63,8 +64,12 @@ interface IDataRow {
   type: string,
   id: number
 }
-const handler: Handler = (event: any, context: Context, callback: Callback) => {
-
+export const handler = async (
+  event: APIGatewayProxyEvent,
+  context: Context,
+  callback: Callback<APIGatewayProxyResult>
+  ): Promise<void> =>  {
+  console.log(`Node.js version: ${process.version}`);
   const host: string = getEnvVarOrThrow(process.env.SIL_TR_HOST);
   const stagepath: string = getEnvVarOrThrow(process.env.SIL_TR_URLPATH);
   const EnglishStrings : EmailStrings = 
@@ -157,17 +162,24 @@ const handler: Handler = (event: any, context: Context, callback: Callback) => {
     const BUCKET = 'sil-transcriber-localization'
     const DIGEST = '/TranscriberDigest-en.xliff'
     var params = {Bucket: BUCKET, Key: locale + DIGEST};
-    //console.log('ReadStrings', params.Key);
     try {
-      var s3 = new AWS.S3();
-      const xml_data = await s3.getObject(params).promise();
-      return xml_data?.Body?.toString() ;
+      const client = new S3Client({ region: 'us-east-1' });
+      const command = new GetObjectCommand(params);
+      const data = await client.send(command);
+      const stream = data.Body as Readable;
+      const chunks: Uint8Array[] = [];
+      for await (let chunk of stream) {
+        chunks.push(chunk);
+      }
+      const xml_data = Buffer.concat(chunks).toString('utf-8');
+      return xml_data;
     } catch (err) {
-        console.log('ReadStrings error:', params.Key);
-        if ((err as any).code !== 'NoSuchKey')
-          console.log('ReadStrings', err);
-        //use default english
-        return undefined;
+      console.log('ReadStrings error:', params.Key);
+      if ((err as any).name !== 'NoSuchKey') {
+      console.log('ReadStrings', err);
+      }
+      // Use default English
+      return undefined;
     }
 }
 function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, function(i) {
@@ -183,9 +195,6 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       const data = await XMLtoJS(strings);
       var js = data;
       for (var ix = 0; ix < js.xliff.file[0].body[0]['trans-unit'].length; ix++) {
-        //console.log(ix, 
-        //js.xliff.file[0].body[0]['trans-unit'][ix]['$'].id, 
-        //js.xliff.file[0].body[0]['trans-unit'][ix].target[0]['_']);
         var ids = js.xliff.file[0].body[0]['trans-unit'][ix]['$'].id.split('.');
         if (ids[0] === 'digest') {
           //encode all but subject
@@ -207,9 +216,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
         path: stagepath + "/api/statehistories/since/" + since,
         method: "GET"
       };
-      console.log(host + options.path);
       const req = request(options, res => {
-        console.log(res.statusCode);
         if (res.statusCode != 200) {
           //not found
           reject(res.statusCode);
@@ -292,11 +299,18 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
       end = end + 1;
     }
     contents += buildProjPlan(data.slice(start, end), strings);
-    var utc = moment(data[0].attributes.updated);
-    var local = data[0].attributes.timezone ?
-      utc.clone().tz(data[0].attributes.timezone) : utc.clone();
+    const utcDate = new Date(data[0].attributes.updated);
+    const options: Intl.DateTimeFormatOptions = {
+      hour: 'numeric',
+      hour12: true,
+      timeZone: data[0].attributes.timezone ?? 'America/Chicago',
+      timeZoneName: 'short'
+      };
+    //const options = { timeZone: data[0].attributes.timezone, hour12: false, hour: 'numeric',timeZoneName: 'short' };
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const formattedDate = formatter.format(utcDate);
     return hour_html
-      .replace("{Hour}", local.format('ha z'))
+      .replace("{Hour}", formattedDate)
       .replace("{projplanrows}", contents);
   }
   function buildDay(data: IDataRow[], strings: EmailStrings): string {
@@ -361,22 +375,20 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
     }
     var params = {
       FunctionName: 'SendSESEmail', // the lambda function we are going to invoke
-      InvocationType: 'Event', // 'RequestResponse', //'Event', // 
-      LogType: 'Tail',
+      InvocationType: InvocationType.Event, // 'RequestResponse', //'Event', // 
+      LogType: LogType.Tail,
       Payload: JSON.stringify(payload)
     };
-    config.region = 'us-east-1';
-    const lambda = new Lambda();
+    const client = new LambdaClient({ region: 'us-east-1' });
+    const command = new InvokeCommand(params);
 
-    lambda.invoke(params, function (err, data) {
-      if (err) {
-        console.log('SendSESEmail', to, err);
-        context.fail(err);
-      } else {
-        console.log('SendSESEmail',to, "Success");
-        //context.succeed('SendSES said ' + data.Payload);
+    try {
+      const data = await client.send(command);
+      console.log('SendSESEmail', to, "Success", data.StatusCode);
+      } catch (err) {
+      console.log('SendSESEmail', to, err);
+      throw err;
       }
-    })
   }
 
   try {
@@ -390,8 +402,8 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
     var headers_html = readFile('templates/headers.partial.hbs');
     var row_html = readFile('templates/row.partial.hbs');
 
-    getChanges(since.toISOString()).then(async function (data: IDataRow[]) {
-      console.log("getChanges", data.length);
+    try {
+    var data:IDataRow[] = await getChanges(since.toISOString());
       if (data.length > 0) {
         var email: string = data[0].attributes.email;
         var locale: string = data[0].attributes.locale ?? "en";
@@ -421,13 +433,11 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
             buildEmailNHE(data.slice(start, end), strings), strings.digest.subject);
           
       }
-    }, function (err) { console.log('getChanges', err) });
+    } catch (err) { console.log('getChanges', err) };
 
-  } catch (e) {
+  } catch (e:any) {
     console.log("catch");
     console.log(e);
     callback(e as Error, undefined);
   }
 };
-
-export { handler }
