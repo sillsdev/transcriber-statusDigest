@@ -415,7 +415,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
           row = data[ix];
           if (row.attributes.email != email) {
               console.log("send to ", email, strings.digest.subject, start, end - 1);
-              sendEmail(email,
+              await sendEmail(email,
                   buildEmailNHE(data.slice(start, end), strings), strings.digest.subject);
             
             start = end;
@@ -429,7 +429,7 @@ function encodeStr(str:string) {return str.replace(/[\u00A0-\u9999<>\&]/g, funct
           end = end + 1;
         } 
           console.log("send to ", email, strings.digest.subject, start, end - 1);
-          sendEmail(email,
+          await sendEmail(email,
             buildEmailNHE(data.slice(start, end), strings), strings.digest.subject);
           
       }
